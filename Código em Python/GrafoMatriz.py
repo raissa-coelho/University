@@ -1,8 +1,5 @@
 #Grafo com pesos/ Tipo Matriz
 
-from ipaddress import collapse_addresses
-
-
 class GrafoM():
 
     def Def(self, col, lin):
