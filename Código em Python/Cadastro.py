@@ -16,7 +16,6 @@ class Aluno():
         self.aluno["matricula"] = num
         return self.aluno
 
-
 class Lista():
 
      def ini(self, lista):
@@ -41,7 +40,24 @@ class Lista():
                self.tam += 1
         return self.lista
     
+     def Remove(self, aluno):
+        al = Aluno()
+        tam = 0
+        for i in range(len(self.lista)):
+            al = self.lista[i] 
+            if aluno == al["nome"]:
+                self.lista.pop(tam)
+            else:
+                tam = tam + 1
+        return self.lista
     
+     def listaCurso(self, curso):
+         al = Aluno()
+         for i in range(len(self.lista)):
+            al = self.lista[i] 
+            if curso == al["curso"]:
+                print(al)
+         
      def imprimi(self,lista):
         if lista == None:
             print("Vazia.")
@@ -49,7 +65,6 @@ class Lista():
            for key in lista.keys():
                print(lista[key])
                 
-
 
 def MENU():
     print("--MENU--")
@@ -76,10 +91,13 @@ def main():
         elif op == 2:
             aluno = input("Nome: ")
             list = l.Remove(aluno)
+        elif op == 3:
+            curso = input("Curso: ")
+            list = l.listaCurso(curso)
         elif op == 4:
             l.imprimi(list)
         else:
-            print("Invalido.")    
+            print("Invalido.")
 
         print()
         MENU()
