@@ -1,6 +1,7 @@
 #Cadastro de alunos de uma instituição de ensino
 #incompleto
 
+
 class Aluno():
 
     def ini(self, aluno):
@@ -9,12 +10,12 @@ class Aluno():
         self.aluno = aluno
         return self.aluno
 
-    def Inserir(self, nome, curso, num, tam):
-        self.aluno[tam] = []
-        self.aluno[tam].append(nome)
-        self.aluno[tam].append(curso)
-        self.aluno[tam].append(num)
+    def Inserir(self, nome, curso, num):
+        self.aluno["nome"] = nome
+        self.aluno["curso"] = curso
+        self.aluno["matricula"] = num
         return self.aluno
+
 
 class Lista():
 
@@ -30,20 +31,16 @@ class Lista():
         al = Aluno()
         at = None
         al.ini(at)
-        at = al.Inserir(nome, curso, num, self.tam)
+        at = al.Inserir(nome, curso, num)
 
-        if nome not in self.lista:
-            if self.tam == 0: 
-               self.lista[self.tam] = []
-               self.lista[self.tam].append(at)
-               self.tam += 1
-            else:
-               self.lista[self.tam] = []
-               self.lista[self.tam].append(at)
+        if self.tam == 0: 
+               self.lista[self.tam] = at
                self.tam += 1
         else:
-            print("Já cadastrado.")
+               self.lista[self.tam] = at
+               self.tam += 1
         return self.lista
+    
     
      def imprimi(self,lista):
         if lista == None:
@@ -76,6 +73,9 @@ def main():
             curso = input("Curso: ")
             mat = int(input("Matricula: "))
             list = l.Cadastro(nome, curso, mat)
+        elif op == 2:
+            aluno = input("Nome: ")
+            list = l.Remove(aluno)
         elif op == 4:
             l.imprimi(list)
         else:
