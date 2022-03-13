@@ -16,4 +16,4 @@ def create_conection(path):
 if __name__ == '__main__':
     create_conection(r"C:\Users\raiss\Downloads\Programas\Python\SQLfiles\Database\pythonsqlite.db")
 
-// criando uma Database em python
+# criando uma Database em python
