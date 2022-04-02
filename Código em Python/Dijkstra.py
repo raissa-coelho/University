@@ -1,56 +1,101 @@
+#Bianca Nunes Coelho - 15102880
+#Algoritmo de Dijkstra implementado na linguagem python
 
-from queue import PriorityQueue
+from numpy import Infinity
 
-class Grafo:
-    def __init__(self, vertices):
-        self.v = vertices
-        self.aresta = [[-1 for i in range(vertices)] for j in range(vertices)]
-        self.visitou = []
+#Grafo - Tipo Matriz
+class Grafo():
 
-    def add(self, u, v, peso):
-        self.aresta[u][v] = peso
-        self.aresta[v][u] = peso
+    def define(self, vert):
+        matriz = [ ( [0] * vert) for i in range(vert) ]
+        self.vert = vert
+        self.matriz = matriz
+        return matriz
+    
+    def addPeso(self, col, lin, peso):
+        self.matriz[lin][col] = peso
+        self.matriz[col][lin] = peso
+        return self.matriz
+    
+    def imprimi(self, matriz):
+        if matriz == None:
+            print("Vazia.")
+        else:
+            print(matriz)
 
-    def dijkstra(self, comeco):
-        aux = {v: float('inf') for v in range(self.v)}
-        aux[comeco] = 0
+    #Distância minima
+    def MinD(self, distancia, vt):
+        min = Infinity
+        for v in range(self.vert):
+            if distancia[v] < min and vt[v] == False:
+                min = distancia[v]
+                min2 = v 
+        return min2
 
-        prioridade = PriorityQueue()
-        prioridade.put((0,comeco))
+    #Algoritmo de Dijkstra
+    def dijkstra(self, inicio, destino):
+        distancia = [Infinity] * self.vert
+        distancia[inicio] = 0
+        vt = [False] * self.vert
 
-        while not prioridade.empty():
-            (distancia, atualV) = prioridade.get()
-            self.visitou.append(atualV)
+        for u in range(self.vert):
+            minimo = self.MinD(distancia, vt)
+            vt[minimo] = True
+            for vv in range(self.vert):
+                if(self.matriz[minimo][vv] > 0 and vt[vv] == False and distancia[vv] > distancia[minimo] + self.matriz[minimo][vv] ):
+                    distancia[vv] = distancia[minimo] + self.matriz[minimo][vv]
 
-            for vizinho in range(self.v):
-                if self.aresta[atualV][vizinho] != -1:
-                    distancia = self.aresta[atualV][vizinho]
-                    if vizinho not in self.visitou:
-                        custo_antigo = aux[vizinho]
-                        custo_novo = aux[atualV] + distancia
-                        if custo_novo < custo_antigo:
-                            prioridade.put((custo_novo,vizinho))
-                            aux[vizinho] = custo_novo
-        return aux
+        print("Distancia de ", inicio, "para ", destino, "é:", distancia[destino])  
+    
+#MENU
+def MENU():
+    print("--MENU--")
+    print("1.Número de Vertices")
+    print("2.Leitura de Pesos")
+    print("3.Menor caminho entre dois vértices(Dijkstra)")
+    print("4.Imprimi Grafo")
+    print("5.Sair")
 
-g = Grafo(9)
-g.add(0, 1, 4)
-g.add(0, 6, 7)
-g.add(1, 6, 11)
-g.add(1, 7, 20)
-g.add(1, 2, 9)
-g.add(2, 3, 6)
-g.add(2, 4, 2)
-g.add(3, 4, 10)
-g.add(3, 5, 5)
-g.add(4, 5, 15)
-g.add(4, 7, 1)
-g.add(4, 8, 5)
-g.add(5, 8, 12)
-g.add(6, 7, 1)
-g.add(7, 8, 3)
+#Função Main
+def main():
+    MENU()
+    grafo = None
+    gr = Grafo()
 
-D = g.dijkstra(0)
+    op = int(input("Op:"))
 
-for vertex in range(len(D)):
-    print("Distance from vertex 0 to vertex", vertex, "is", D[vertex])
+    while op != 5:
+        if op == 1:
+            
+            vert = int(input("Vertices:"))
+            if vert > 20:
+                print("Inválido.")
+                vert = int(input("Vertices:"))
+            grafo = gr.define(vert)
+        
+        elif op == 2:
+            lin = int(input("Linha: "))
+            col = int(input("Coluna:"))
+            peso = int(input("Peso: "))
+            if peso < 0:
+                print("Erro. Não pode ser negativo.")
+                peso = int(input("Peso: "))
+            grafo = gr.addPeso(col, lin, peso)
+        
+        elif op == 3:
+            verticeA = int(input("Partida:"))
+            verticeB = int(input("Chegada:"))
+            gr.dijkstra(verticeA, verticeB)
+        
+        elif op == 4:
+            gr.imprimi(grafo)
+        
+        else:
+            print()
+        
+        print()
+        MENU()
+        op = int(input("Op:"))
+
+if __name__ == "__main__":
+    main()
