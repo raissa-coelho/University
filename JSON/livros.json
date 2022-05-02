@@ -1,0 +1,14 @@
+[
+    {
+        "nome": "A divina comedia",
+        "autor": "Dante Alighieri",
+        "ano": 1300,
+        "sinopse": "Dante se encontra guiado por um homem chamado Vergil pelos vários níveis do Inferno, Purgatório e Paraíso."
+    },
+    {
+        "nome": "Tumba",
+        "autor": "H.P. Lovecraft",
+        "ano": 1880,
+        "sinopse": "Contos do inico da carreira do escritor H.P. Lovecraft."
+    }
+]
