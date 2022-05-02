@@ -1,0 +1,23 @@
+[  
+    {
+        "name": "Bianca",
+        "age": 26,
+        "games": ["Warframe","Overwatch"]
+    },
+    {
+        "name": "Raissa",
+        "age": 26,
+        "games": ["Warframe", "Overwatch"]
+    },
+    {
+        "name": "Sandra",
+        "age": 56,
+        "games": null
+    },
+    {
+        "name": "Vinicius",
+        "age": 32,
+        "games": ["League of Legends", "Valorant"]
+    }
+]
+
