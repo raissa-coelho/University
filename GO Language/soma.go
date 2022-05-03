@@ -7,8 +7,8 @@ var som int
 const t = 10
 
 func main() {
-	x := 10
-	som := soma(x)
+	x := 10 // declaration
+	som = soma(x) // assignment
 	fmt.Println(som)
 }
 
