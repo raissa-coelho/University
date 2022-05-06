@@ -13,9 +13,16 @@ if response.status_code == 200:
 response.encoding = 'utf-8'
 print(response.text)
 
-response.json()
+print("###############################")
+
+dd = response.json() #returna a dict
+print(dd)
+
+print("###############################")
 
 print(response.headers)
+#Can access it like a dictionary ---> JSON
+#response.headers['content-type']
 
 
 
