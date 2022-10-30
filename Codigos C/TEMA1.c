@@ -5,14 +5,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <pthread.h>
 
-//Variaveis do banco
+//Variaveis do banco - globais
 int especie;
 int taxa;
 int subsidio;
 //Fim Variaveis do banco
 
+bool flagENDGRUPO;
 char estado;
 
 //Estrutura do custo do imóvel
@@ -65,9 +67,14 @@ void *Pagar(void *arg){
     printf("Subsidio: %d\n", data->subsidio);
     printf("Taxas: %d\n", data->taxas);
 
-
+    while(data){
+        bool achou = false;
+        //
+    }
+   
     pthread_exit(NULL);
 }
+
 
 int main(){
     printf("---->COMECO DO PROGRAMA<----\n");
@@ -125,7 +132,9 @@ int main(){
             }
         }
         printf("!!!FIM GRUPO %d!!!\n", grupo);
-        subsidio = subsidio + ((subsidio*50)/100);
+        if(flagENDGRUPO == true){
+            subsidio = subsidio + ((subsidio*50)/100);
+        }
         grupo++;
     }
 
