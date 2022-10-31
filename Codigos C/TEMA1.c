@@ -9,13 +9,23 @@
 #include <pthread.h>
 
 //Variaveis do banco - globais
-int especie;
-int taxa;
-int subsidio;
+int especie = 500000;
+int taxa = 30000;
+int subsidio = 100000;
+int *recursos;
 //Fim Variaveis do banco
 
-bool flagENDGRUPO;
-char estado;
+//Váriaveis processo
+int **alocados;
+int **requeridos;
+int **necessarios;
+int *sequenciaSegura;
+int numProcess;
+//Fim variáveis processo
+
+int grupos = 2;
+int numeroThreads = 3;
+pthread_mutex_t lock;
 
 //Estrutura do custo do imóvel
 typedef struct custoImovel{
@@ -53,39 +63,82 @@ int taxaImovel(int valor){
     return taxaI;
 }
 
-//Função pagamento das threads/pessoas para o banco
-void *Pagar(void *arg){
-    custo_pessoa *data = (custo_pessoa *)arg;
-    
-    //Print das informações do cliente e do imóvel a ser comprado/financiado pelo banco
-    printf("THREAD/CLIENTE %d:\n", data->tid);
-    printf("Custo Total do Imovel: %d\n", data->custoImovel.custoTotal);
-    printf("SubsidioImovel: %d\n", data->custoImovel.subsidioImovel);
-    printf("TaxaImovel: %d\n", data->custoImovel.taxaImovel);
-    printf("EspecieImovel: %d\n", data->custoImovel.especieImovel);
-    printf("Entrada: %d\n", data->entrada);
-    printf("Subsidio: %d\n", data->subsidio);
-    printf("Taxas: %d\n", data->taxas);
-
-    while(data){
-        bool achou = false;
-        //
+bool sequencia(){
+    int res[3];
+    for(int i =0; i < 3; i++){
+        res[i] = recursos[i];
     }
-   
-    pthread_exit(NULL);
+    bool terminou[numeroThreads];
+    for(int i=0; i<numeroThreads; i++){
+        terminou[i] = false;
+    }
+    int numeroEND=0;
+    while(numeroEND < numeroThreads) {
+        bool seguro = false;
+
+        for(int i=0; i<numeroThreads; i++) {
+            if(!terminou[i]) {
+                bool possivel = true;
+                for(int j=0; j<3; j++)
+                    if(necessarios[i][j] > res[j]) {
+                        possivel = false;
+                        break;
+                }
+
+                if(possivel) {
+                    for(int j=0; j<3; j++){
+                        res[j] += alocados[i][j];
+                    }
+                    sequenciaSegura[numeroEND] = i;
+                    terminou[i] = true;
+                    ++numeroEND;
+                    seguro = true;
+                }
+            }
+        }
+
+        if(!seguro) {
+            for(int k=0; k<numeroThreads; k++){ 
+                sequenciaSegura[k] = -1;
+            }
+            return false; 
+        }
+    }
+    return true;
 }
 
+void *Pagar(void *arg){
+    int p = *((int*)arg);
+
+    //região critica
+    pthread_mutex_lock(&lock);
+    
+    printf("PROCESSO %d\n", p);
+    printf("Alocados: %d, %d, %d\n", alocados[p][0],alocados[p][1], alocados[p][2]);
+    printf("Requeridos: %d, %d, %d\n", requeridos[p][0],requeridos[p][1], requeridos[p][2]);
+    printf("Recursos Disponiveis: %d, %d, %d\n", recursos[0],recursos[1], recursos[2]);
+    printf("\n");
+    printf("Cliente pagando banco...\n");
+    //sleep(3);
+    printf("Fim do pagamento!\n");
+    printf("\n");
+    
+    recursos[0] = recursos[0] + alocados[p][0];
+    recursos[1] = recursos[1] + alocados[p][1];
+
+    pthread_mutex_unlock(&lock);
+    pthread_exit(NULL);
+}
 
 int main(){
     printf("---->COMECO DO PROGRAMA<----\n");
     srand(time(0));
-    
-    especie = 500000;
-    taxa = 30000;
-    subsidio = 100000;
-    
-    int grupos = 2;
-    int numeroThreads = 3;
+
+    recursos = (int*)malloc(3*sizeof(*recursos));
+    recursos[0] = 500000; //especie
+    recursos[1] = 30000; //taxa
+    recursos[2] = 100000; //subsidio
+
     int array[3] = {5,10,20}; // para escolher a porcentagem de subsidio do valor do imóvel
     
     pthread_t threads[numeroThreads];
@@ -97,9 +150,16 @@ int main(){
 
     while (grupo != grupos){
         printf("!!!!GRUPO %d !!!!\n", grupo);
-        printf("INFO BANCO ---> ESPECIE: %d ---> SUBSIDIO: %d ---> TAXAS: %d\n", especie,subsidio,taxa);
-        for(i = 0; i < numeroThreads;i++){
-            printf("Criando uma thread: %d\n", i);
+        printf("INFO BANCO ---> ESPECIE: %d ---> SUBSIDIO: %d ---> TAXAS: %d\n", recursos[0],recursos[2],recursos[1]);
+
+        printf("\n");
+        //Alocação de Processos
+        alocados = (int **)malloc(numeroThreads * sizeof(*alocados));
+        for(i =0; i< numeroThreads; i++){
+            alocados[i] = (int*)malloc(3*sizeof(**alocados));
+        }
+        
+        for (i = 0; i< numeroThreads; i++){
             data[i].tid = i;
 
             int temp = rand() % especie;
@@ -122,25 +182,97 @@ int main(){
             }
             int nArray = rand() % 3;
             data[i].subsidio = (array[nArray]*temp)/100;
+            
+            alocados[i][0] = data[i].entrada;
+            alocados[i][1] = data[i].taxas;
+            alocados[i][2] = data[i].subsidio;
+        }
+
+        printf("\n");
+        //Máximo que um processo precisa
+        requeridos = (int**)malloc(numeroThreads*sizeof(*requeridos));
+        for(i = 0;i < numeroThreads;i++){
+            requeridos[i] = (int*)malloc(3*sizeof(**requeridos));
+        }
+
+        for(i = 0; i< numeroThreads; i++){
+            if(data[i].entrada == data[i].custoImovel.custoTotal){
+                requeridos[i][0] = 0;
+                requeridos[i][1] = 0;
+                requeridos[i][2] = 0;
+            }
+            if(data[i].entrada < data[i].custoImovel.custoTotal){
+                requeridos[i][2] = alocados[i][2];
+                requeridos[i][0] = alocados[i][2] - data[i].custoImovel.custoTotal;
+                if(data[i].taxas < data[i].custoImovel.taxaImovel){
+                    requeridos[i][1] = alocados[i][1] - data[i].custoImovel.taxaImovel;
+                }else{
+                    requeridos[i][1] = 0;
+                }
+            }
+        }
         
-            rc = pthread_create(&threads[i], NULL, Pagar, &data[i]);
-            printf("Thread %d criada!\n",data[i].tid);
+        printf("\n");
+        //Criação da matrix de recursos necessários para os processos
+        necessarios = (int**)malloc(numeroThreads*sizeof(*necessarios));
+        for(i = 0; i<numeroThreads;i++){
+            necessarios[i] = (int*)malloc(numeroThreads*sizeof(**necessarios));
+        }
+        for(i = 0; i < numeroThreads; i++){
+            for(int j =0; j < 3; j++){
+                necessarios[i][j] = requeridos[i][j] - alocados[i][j];
+            }
+        }
+
+        printf("\n");
+        //Algoritmo do banqueiro
+        sequenciaSegura = (int *)malloc(numeroThreads * sizeof(*sequenciaSegura));
+        for(int i=0; i<numeroThreads; i++){
+            sequenciaSegura[i] = -1;
+        }
+
+        if(!sequencia()){
+            printf("Sequencia Insegura!");
+            exit(-1);
+        }
+
+        printf("Sequencia segura:");
+        for(i = 0; i < numeroThreads; i++){
+            printf("%d--", sequenciaSegura[i]+1);
+        }
+
+        printf("\n");
+        //Criação das Threads para execução
+        for(i = 0; i < numeroThreads;i++){
+            printf("Criando uma thread: %d\n", i);
         
+            rc = pthread_create(&threads[i], NULL, Pagar, &data[i].tid);
             if(rc){
                 printf("ERRO; pthread_create() devolveu o erro %d\n", rc);
                 exit(-1);
             }
         }
         printf("!!!FIM GRUPO %d!!!\n", grupo);
-        if(flagENDGRUPO == true){
-            subsidio = subsidio + ((subsidio*50)/100);
-        }
+        recursos[2] = recursos[2] + ((recursos[2]*50)/100);
+
         grupo++;
     }
 
     for (i = 0; i < numeroThreads; i++){
         pthread_join(threads[i],NULL);
     }
+    
+    //liberando memória
+    free(recursos);
+    for(int i=0; i<numeroThreads; i++) {
+        free(alocados[i]);
+        free(requeridos[i]);
+		free(necessarios[i]);
+    }
+    free(alocados);
+    free(requeridos);
+	free(necessarios);
+    free(sequenciaSegura);
 
     printf("---->FIM DO PROGRAMA<----\n");
     return(0);
