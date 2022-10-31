@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 
 //Variaveis do banco - globais
@@ -23,11 +24,14 @@ int **necessarios;
 int *sequenciaSegura;
 int numProcess;
 int *imoveis;
+int numeroRun = 0;
 //Fim variáveis processo
 
 int grupos = 2;
 int numeroThreads = 2;
 pthread_mutex_t lock;
+pthread_mutex_t lockGrupo;
+pthread_cond_t condicao;
 
 //Estrutura do custo do imóvel
 typedef struct custoImovel{
@@ -97,6 +101,9 @@ void *Pagar(void *arg){
 
     //região critica
     pthread_mutex_lock(&lock);
+    while(p != sequenciaSegura[numeroRun]){
+         pthread_cond_wait(&condicao, &lock);
+    }
     
     printf("PROCESSO %d\n", p);
     printf("Custo do imovel: %d\n", imoveis[p]);
@@ -105,13 +112,15 @@ void *Pagar(void *arg){
     printf("Recursos Disponiveis: %d, %d, %d\n", recursos[0],recursos[1], recursos[2]);
     printf("\n");
     printf("Cliente pagando banco...\n");
-    //sleep(3);
+    sleep(10);
     printf("Fim do pagamento!\n");
     printf("\n");
     
     recursos[0] = recursos[0] + alocados[p][0];
     recursos[1] = recursos[1] + alocados[p][1];
 
+    numeroRun++;
+    pthread_cond_broadcast(&condicao);
     pthread_mutex_unlock(&lock);
     pthread_exit(NULL);
 }
@@ -135,9 +144,12 @@ int main(){
     int grupo = 0;
 
     do{
+        pthread_mutex_lock(&lockGrupo);
+
         printf("!!!!GRUPO %d!!!!\n", grupo);
         printf("INFO BANCO ---> ESPECIE: %d ---> SUBSIDIO: %d ---> TAXAS: %d\n", recursos[0],recursos[2],recursos[1]);
 
+        printf("\n");
         printf("Alocando Processos\n");
         //Alocação de Processos
         imoveis = (int*)malloc(numeroThreads*sizeof(*imoveis));
@@ -182,6 +194,7 @@ int main(){
             alocados[i][2] = data[i].subsidio;
         }
 
+        printf("\n");
         printf("Calculando recursos necessários\n");
         //Máximo que um processo precisa
         requeridos = (int**)malloc(numeroThreads*sizeof(*requeridos));
@@ -206,6 +219,7 @@ int main(){
             }
         }
         
+        printf("\n");
         printf("Criacao da matriz\n");
         //Criação da matrix de recursos necessários para os processos
         necessarios = (int**)malloc(numeroThreads*sizeof(*necessarios));
@@ -218,6 +232,7 @@ int main(){
             }
         }
 
+        printf("\n");
         printf("Descobrindo sequencia segura\n");
         //Algoritmo do banqueiro
         sequenciaSegura = (int *)malloc(numeroThreads * sizeof(*sequenciaSegura));
@@ -226,7 +241,7 @@ int main(){
         }
 
         if(!sequencia()){
-            printf("Sequencia Insegura!");
+            printf("Sequencia Insegura!\n");
             exit(-1);
         }
 
@@ -235,6 +250,7 @@ int main(){
             printf("-->P%d", sequenciaSegura[i]);
         }
 
+        printf("\n");
         printf("Criando processos\n");
         //Criação das Threads para execução
         for(i = 0; i < numeroThreads;i++){
@@ -245,10 +261,13 @@ int main(){
                 exit(-1);
             }
         }
-        printf("!!!FIM GRUPO %d!!!\n", grupo);
-        recursos[2] = recursos[2] + ((recursos[2]*50)/100);
+        if(numeroRun == numeroThreads){
+            pthread_mutex_unlock(&lockGrupo);
+            printf("!!!FIM GRUPO %d!!!\n", grupo);
+            recursos[2] = recursos[2] + ((recursos[2]*50)/100);
 
-        grupo++;
+            grupo++;
+        }
     }while (grupo != grupos);
 
     for (i = 0; i < numeroThreads; i++){
