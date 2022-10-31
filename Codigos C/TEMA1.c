@@ -30,7 +30,7 @@ int numeroRun = 0;
 int grupos = 2;
 int numeroThreads = 2;
 pthread_mutex_t lock;
-pthread_mutex_t lockGrupo;
+pthread_barrier_t lockGrupo;
 pthread_cond_t condicao;
 
 //Estrutura do custo do imóvel
@@ -112,7 +112,7 @@ void *Pagar(void *arg){
     printf("Recursos Disponiveis: %d, %d, %d\n", recursos[0],recursos[1], recursos[2]);
     printf("\n");
     printf("Cliente pagando banco...\n");
-    sleep(10);
+    sleep(3);
     printf("Fim do pagamento!\n");
     printf("\n");
     
@@ -138,13 +138,13 @@ int main(){
     
     pthread_t threads[numeroThreads];
     custo_pessoa data[numeroThreads];
-    
+    pthread_barrier_init(&lockGrupo,NULL, numeroThreads+1);
+
     int i = 0;
     int rc;
     int grupo = 0;
 
     do{
-        pthread_mutex_lock(&lockGrupo);
 
         printf("!!!!GRUPO %d!!!!\n", grupo);
         printf("INFO BANCO ---> ESPECIE: %d ---> SUBSIDIO: %d ---> TAXAS: %d\n", recursos[0],recursos[2],recursos[1]);
@@ -261,19 +261,33 @@ int main(){
                 exit(-1);
             }
         }
-        if(numeroRun == numeroThreads){
-            pthread_mutex_unlock(&lockGrupo);
-            printf("!!!FIM GRUPO %d!!!\n", grupo);
-            recursos[2] = recursos[2] + ((recursos[2]*50)/100);
 
-            grupo++;
+        for (i = 0; i < numeroThreads; i++){
+            pthread_join(threads[i],NULL);
+        }        
+        printf("\n");
+        printf("Liberando memoria...\n");
+        //liberando memória
+        for( i=0; i<numeroThreads; i++) {
+            free(alocados[i]);
+            free(requeridos[i]);
+		    free(necessarios[i]);
         }
-    }while (grupo != grupos);
+        free(imoveis);
+        free(alocados);
+        free(requeridos);
+	    free(necessarios);
+        free(sequenciaSegura);
+        pthread_barrier_destroy(&lockGrupo);
+        numeroRun = 0; // reinicializa contador de processos
 
-    for (i = 0; i < numeroThreads; i++){
-        pthread_join(threads[i],NULL);
-    }
-    
+        printf("!!!FIM GRUPO %d!!!\n", grupo);
+        recursos[2] = recursos[2] + ((recursos[2]*50)/100);
+
+        grupo++;
+    }while (grupo != grupos);
+    printf("\n");
+    printf("Liberando memoria...\n");
     //liberando memória
     free(recursos);
     for( i=0; i<numeroThreads; i++) {
