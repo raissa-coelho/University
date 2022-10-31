@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
 #include <pthread.h>
 
 //Variaveis do banco - globais
@@ -21,10 +22,11 @@ int **requeridos;
 int **necessarios;
 int *sequenciaSegura;
 int numProcess;
+int *imoveis;
 //Fim variáveis processo
 
 int grupos = 2;
-int numeroThreads = 3;
+int numeroThreads = 2;
 pthread_mutex_t lock;
 
 //Estrutura do custo do imóvel
@@ -63,6 +65,7 @@ int taxaImovel(int valor){
     return taxaI;
 }
 
+//Algoritmo do Banqueiro
 bool sequencia(){
     int res[3];
     for(int i =0; i < 3; i++){
@@ -107,6 +110,7 @@ bool sequencia(){
     return true;
 }
 
+//função de pagamento ao banco ---> processos
 void *Pagar(void *arg){
     int p = *((int*)arg);
 
@@ -114,6 +118,7 @@ void *Pagar(void *arg){
     pthread_mutex_lock(&lock);
     
     printf("PROCESSO %d\n", p);
+    printf("Custo do imovel: %d\n", imoveis[p]);
     printf("Alocados: %d, %d, %d\n", alocados[p][0],alocados[p][1], alocados[p][2]);
     printf("Requeridos: %d, %d, %d\n", requeridos[p][0],requeridos[p][1], requeridos[p][2]);
     printf("Recursos Disponiveis: %d, %d, %d\n", recursos[0],recursos[1], recursos[2]);
@@ -154,6 +159,7 @@ int main(){
 
         printf("\n");
         //Alocação de Processos
+        imoveis = (int*)malloc(numeroThreads*sizeof(*imoveis));
         alocados = (int **)malloc(numeroThreads * sizeof(*alocados));
         for(i =0; i< numeroThreads; i++){
             alocados[i] = (int*)malloc(3*sizeof(**alocados));
@@ -183,6 +189,8 @@ int main(){
             int nArray = rand() % 3;
             data[i].subsidio = (array[nArray]*temp)/100;
             
+            imoveis[i] = data[i].custoImovel.custoTotal;
+
             alocados[i][0] = data[i].entrada;
             alocados[i][1] = data[i].taxas;
             alocados[i][2] = data[i].subsidio;
@@ -238,7 +246,7 @@ int main(){
 
         printf("Sequencia segura:");
         for(i = 0; i < numeroThreads; i++){
-            printf("%d--", sequenciaSegura[i]+1);
+            printf("-->P%d", sequenciaSegura[i]);
         }
 
         printf("\n");
@@ -264,11 +272,12 @@ int main(){
     
     //liberando memória
     free(recursos);
-    for(int i=0; i<numeroThreads; i++) {
+    for( i=0; i<numeroThreads; i++) {
         free(alocados[i]);
         free(requeridos[i]);
 		free(necessarios[i]);
     }
+    free(imoveis);
     free(alocados);
     free(requeridos);
 	free(necessarios);
