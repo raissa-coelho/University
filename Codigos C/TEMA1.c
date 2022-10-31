@@ -46,25 +46,6 @@ typedef struct custoPessoa{
     int taxas;
 }custo_pessoa;
 
-//Calculo do subsidio do imóvel
-int subsidioImovel(int valor){
-    int subsidioI;
-    srand(time(0));
-    subsidioI = rand () % valor;
-    while (subsidioI > ( (20*valor)/100 ) || subsidioI == 0){
-        srand(time(0));
-        subsidioI = rand () % valor;
-    }
-    return subsidioI;
-}
-
-//Calculo da taxa do imovel
-int taxaImovel(int valor){
-    int taxaI;
-    taxaI = (5*valor)/100;
-    return taxaI;
-}
-
 //Algoritmo do Banqueiro
 bool sequencia(){
     int res[3];
@@ -174,8 +155,13 @@ int main(){
             }
 
             data[i].custoImovel.especieImovel = temp;
-            data[i].custoImovel.subsidioImovel = subsidioImovel(temp);
-            data[i].custoImovel.taxaImovel = taxaImovel(temp);
+
+            data[i].custoImovel.subsidioImovel = rand () % temp;
+            while (data[i].custoImovel.subsidioImovel > ( (20*temp)/100 ) || data[i].custoImovel.subsidioImovel == 0){
+                    data[i].custoImovel.subsidioImovel = rand () % temp;
+            }
+
+            data[i].custoImovel.taxaImovel = (5*temp)/100;
             data[i].custoImovel.custoTotal = data[i].custoImovel.especieImovel + data[i].custoImovel.subsidioImovel + data[i].custoImovel.taxaImovel;      
 
             int lower = (40*temp)/100;
